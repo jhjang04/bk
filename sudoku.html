@@ -5,6 +5,11 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <title></title>
     <style>
+      table {
+        border-spacing: 0px;
+        border: 0.1px solid #444444;
+      }
+
       td{
         border : 0.5px solid black;
         width : 50px;
@@ -62,7 +67,8 @@
   <script>
     var SUDOKU;
     var X_HNIT;
-    var Y_HINT
+    var Y_HINT;
+    var CELL_HINT;
 
     var CELL_TYPE = {
       "INPUT": "INPUT",
@@ -89,6 +95,28 @@
       $('#keypad').css('visibility', 'visible');
       $('#keypad').css('left', position.left);
       $('#keypad').css('top', position.top);
+
+      var tds = $('#keypadbody').children().children()
+      // x[0].style.backgroundColor
+      var idx = Math.floor(y/3) * 3 +  Math.floor(x/3)
+      var hint = CELL_HINT[idx];
+      // for(var i=0; i<9; i++){
+      //   var status = hint.status[i];
+      //   if(status == HINT_STATUS.NOT_INPUT){
+      //     tds[i].style.backgroundColor = '#FFFFFF'
+      //     // $('#'+idGetter(i+1)).css('backgroundColor', '#FFFFFF');
+      //   }
+      //   else if(status == HINT_STATUS.VALID){
+      //     tds[i].style.backgroundColor = '#ABF200'
+      //     // $('#'+idGetter(i+1)).css('backgroundColor', '#ABF200');
+      //   }
+      //   else if(status == HINT_STATUS.INVALID){
+      //     tds[i].style.backgroundColor = '#ED4C00'
+      //     // $('#'+idGetter(i+1)).css('backgroundColor', '#ED4C00');
+      //   }
+      // }
+
+
       KEYPAD_CALLBACK = function(value) {
         $('#blocker').css('visibility', 'hidden');
         $('#keypad').css('visibility', 'hidden');
@@ -163,19 +191,23 @@
 
       update(){
         for(var i=0; i<9; i++){
-          this.status[i] = HINT_STATUS.NOT_INPUT;
-        }
+          var num = i+1;
+          var cnt = 0;
+          for(var j=0; j<9; j++){
+            var cell = SUDOKU[this.y][j];
+            if(cell.value == num){
+              cnt ++;
+            }
+          }
 
-        for(var i=0; i<9; i++){
-          var cell = SUDOKU[this.y][i];
-          if(cell.status == CELL_STATUS.NOT_INPUT){
-            this.status[cell.value-1] = HINT_STATUS.NOT_INPUT;
+          if(cnt == 0){
+            this.status[i] = HINT_STATUS.NOT_INPUT;
           }
-          else if(cell.status == CELL_STATUS.VALID){
-            this.status[cell.value-1] = HINT_STATUS.VALID;
+          else if (cnt ==1){
+            this.status[i] = HINT_STATUS.VALID;
           }
-          else if(cell.status == CELL_STATUS.INVALID){
-            this.status[cell.value-1] = HINT_STATUS.INVALID;
+          else{
+            this.status[i] = HINT_STATUS.INVALID
           }
         }
       }
@@ -192,22 +224,62 @@
 
       update(){
         for(var i=0; i<9; i++){
-          this.status[i] = HINT_STATUS.NOT_INPUT;
-        }
-
-        for(var i=0; i<9; i++){
-          var cell = SUDOKU[i][this.x];
-          if(cell.status == CELL_STATUS.NOT_INPUT){
-            this.status[cell.value-1] = HINT_STATUS.NOT_INPUT;
+          var num = i+1;
+          var cnt = 0;
+          for(var j=0; j<9; j++){
+            var cell = SUDOKU[j][this.x];
+            if(cell.value == num){
+              cnt ++;
+            }
           }
-          else if(cell.status == CELL_STATUS.VALID){
-            this.status[cell.value-1] = HINT_STATUS.VALID;
+          if(cnt == 0){
+            this.status[i] = HINT_STATUS.NOT_INPUT;
           }
-          else if(cell.status == CELL_STATUS.INVALID){
-            this.status[cell.value-1] = HINT_STATUS.INVALID;
+          else if (cnt ==1){
+            this.status[i] = HINT_STATUS.VALID;
+          }
+          else{
+            this.status[i] = HINT_STATUS.INVALID
           }
         }
       }
+    }
+
+    class CellHint {
+      constructor(startY, startX) {
+        this.startY=startY;
+        this.startX=startX;
+        this.status = []
+        for(var i=0; i<9; i++){
+          this.status.push(HINT_STATUS.NOT_INPUT);
+        }
+      }
+
+      update(){
+        for(var i=0; i<9; i++){
+          var num = i+1;
+          var cnt = 0;
+          for(var j=0; j<3; j++){
+            for(var k=0; k<3; k++){
+              var cell = SUDOKU[this.startY + j][this.startX + k];
+              if(cell.value == num){
+                cnt ++;
+              }
+            }
+          }
+          if(cnt == 0){
+            this.status[i] = HINT_STATUS.NOT_INPUT;
+          }
+          else if (cnt ==1){
+            this.status[i] = HINT_STATUS.VALID;
+          }
+          else{
+            this.status[i] = HINT_STATUS.INVALID
+          }
+        }
+      }
+
+
     }
 
     
@@ -215,6 +287,25 @@
       var tr  = document.createElement('tr');
       tr.id = id
       return tr;
+    }
+
+    function createCellTD(y,x){
+      var td = createTD(getTDid(y,x))
+      if(y % 3 == 0){
+        td.style.borderTop = '3px solid black'
+      }
+      if(y % 3 == 2){
+        td.style.borderBottom = '3px solid black'
+      }
+
+      if(x % 3 == 0){
+        td.style.borderLeft = '3px solid black'
+      }
+      if(x % 3 == 2){
+        td.style.borderRight = '3px solid black'
+      }
+
+      return td;
     }
     
     function createTD(id){
@@ -296,7 +387,7 @@
         table.append(tr);
   
         for(var x=-1; x<9; x++){
-          var td = createTD(getTDid(y,x));
+          var td = createCellTD(y,x);
           tr.append(td)
 
           if((y != -1 || x!= -1 ) && (y == -1 || x== -1)){
@@ -355,8 +446,11 @@
         drawCell(SUDOKU[y][i])
       }
       
-      Y_HINT[y].update();
-      X_HNIT[x].update();
+      for(var i=0; i<9; i++){
+        Y_HINT[i].update();
+        X_HNIT[i].update();
+        CELL_HINT[i].update();
+      }
       drawHint(Y_HINT[y], function (num){
         return getYHintId(y, num);
       });
@@ -418,13 +512,16 @@
     function initGame(){
       X_HNIT = []
       Y_HINT = []
+      CELL_HINT = []
       SUDOKU = []
 
       for(var i=0; i<9; i++){
         Y_HINT.push(new YHint(i));
         X_HNIT.push(new XHint(i));
+        CELL_HINT.push(new CellHint(Math.floor((i*3)/9)*3, (i*3)%9))
       }
 
+      
       httpRequest = new XMLHttpRequest();
       httpRequest.onreadystatechange = function() {
         if (httpRequest.readyState === XMLHttpRequest.DONE) {
