@@ -54,6 +54,7 @@
         <tr><td>1</td><td>2</td><td>3</td></tr>
         <tr><td>4</td><td>5</td><td>6</td></tr>
         <tr><td>7</td><td>8</td><td>9</td></tr>
+        <tr><td colspan="3">DEL</td></tr>
       </tbody>
     </table>
 
@@ -98,7 +99,16 @@
 
     function initKeypad(){
       $('#keypadbody').children().children().click(function(e){
+        if(isNaN(this.innerHTML)){
+          KEYPAD_CALLBACK(null);  
+        }
         KEYPAD_CALLBACK(Number(this.innerHTML));
+      })
+
+      $('#blocker').click(function(e){
+        $('#blocker').css('visibility', 'hidden');
+        $('#keypad').css('visibility', 'hidden');
+        KEYPAD_CALLBACK = null;
       })
     }
 
